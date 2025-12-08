@@ -75,14 +75,14 @@ func (logger *Logger) GetHandlers() []Handler {
 }
 
 // AddRecord Adds a log record.
-func (logger *Logger) AddRecord(level record.Level, format string, v ...interface{}) (bool, error) {
+func (logger *Logger) AddRecord(level record.Level, format string, v ...interface{}) {
 	if logger.handlers.Len() == 0 {
 		logger.PushHandler(handler.NewConsoleHandler(logger.level))
 	}
 
 	levelName, err := GetLevelName(level)
 	if err != nil {
-		return false, err
+		panic(err)
 	}
 
 	handlerKey := false
@@ -94,7 +94,7 @@ func (logger *Logger) AddRecord(level record.Level, format string, v ...interfac
 		}
 	}
 	if !handlerKey {
-		return false, nil
+		panic("level handler not exist")
 	}
 
 	if len(v) > 0 {
@@ -115,51 +115,49 @@ func (logger *Logger) AddRecord(level record.Level, format string, v ...interfac
 			break
 		}
 	}
-
-	return true, nil
 }
 
 // Debug Adds a log record at the DEBUG level.
-func (logger *Logger) Debug(format string, v ...interface{}) (bool, error) {
-	return logger.AddRecord(record.DEBUG, format, v...)
+func (logger *Logger) Debug(format string, v ...interface{}) {
+	logger.AddRecord(record.DEBUG, format, v...)
 }
 
 // Info Adds a log record at the INFO level.
-func (logger *Logger) Info(format string, v ...interface{}) (bool, error) {
-	return logger.AddRecord(record.INFO, format, v...)
+func (logger *Logger) Info(format string, v ...interface{}) {
+	logger.AddRecord(record.INFO, format, v...)
 }
 
 // Notice Adds a log record at the NOTICE level.
-func (logger *Logger) Notice(format string, v ...interface{}) (bool, error) {
-	return logger.AddRecord(record.NOTICE, format, v...)
+func (logger *Logger) Notice(format string, v ...interface{}) {
+	logger.AddRecord(record.NOTICE, format, v...)
 }
 
 // Warn Adds a log record at the WARNING level.
-func (logger *Logger) Warn(format string, v ...interface{}) (bool, error) {
-	return logger.AddRecord(record.WARNING, format, v...)
+func (logger *Logger) Warn(format string, v ...interface{}) {
+	logger.AddRecord(record.WARNING, format, v...)
 }
 
 // Error Adds a log record at the ERROR level.
-func (logger *Logger) Error(format string, v ...interface{}) (bool, error) {
-	return logger.AddRecord(record.ERROR, format, v...)
+func (logger *Logger) Error(format string, v ...interface{}) {
+	logger.AddRecord(record.ERROR, format, v...)
 }
 
 // Crit Adds a log record at the CRITICAL level.
-func (logger *Logger) Crit(format string, v ...interface{}) (bool, error) {
-	return logger.AddRecord(record.CRITICAL, format, v...)
+func (logger *Logger) Crit(format string, v ...interface{}) {
+	logger.AddRecord(record.CRITICAL, format, v...)
 }
 
 // Alert Adds a log record at the ALERT level.
-func (logger *Logger) Alert(format string, v ...interface{}) (bool, error) {
-	return logger.AddRecord(record.ALERT, format, v...)
+func (logger *Logger) Alert(format string, v ...interface{}) {
+	logger.AddRecord(record.ALERT, format, v...)
 }
 
 // Emerg Adds a log record at the EMERGENCY level.
-func (logger *Logger) Emerg(format string, v ...interface{}) (bool, error) {
-	return logger.AddRecord(record.EMERGENCY, format, v...)
+func (logger *Logger) Emerg(format string, v ...interface{}) {
+	logger.AddRecord(record.EMERGENCY, format, v...)
 }
 
-// Gets the name of the logging level.
+// GetLevelName Gets the name of the logging level.
 func GetLevelName(level record.Level) (string, error) {
 	levels := record.GetLevels()
 	l, ok := levels[level]

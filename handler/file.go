@@ -64,7 +64,10 @@ func (h *FileHandler) write(r record.Record) {
 	defer h.Unlock()
 	file, _ := os.OpenFile(h.GetFilename(), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	defer file.Close()
-	file.Write([]byte(r.Formatted))
+	_, err := file.Write([]byte(r.Formatted))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetFilename Gets the filename.

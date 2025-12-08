@@ -65,5 +65,8 @@ func (h *ConsoleHandler) write(r record.Record) {
 	h.Lock()
 	defer h.Unlock()
 	message := colors[r.Level](r.Formatted)
-	os.Stdout.Write(append([]byte(message)))
+	_, err := os.Stdout.Write(append([]byte(message)))
+	if err != nil {
+		panic(err)
+	}
 }
