@@ -1,10 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-think/log/record"
@@ -12,7 +12,6 @@ import (
 
 type FileHandler struct {
 	Handler
-	sync.Mutex
 	level    record.Level
 	bubble   bool
 	filename string
@@ -42,16 +41,19 @@ func (h *FileHandler) IsHandling(r record.Record) bool {
 }
 
 // Handle Handles a record.
-func (h *FileHandler) Handle(r record.Record) bool {
+func (h *FileHandler) Handle(r record.Record) (bool, error) {
 	if !h.IsHandling(r) {
-		return false
+		return false, nil
 	}
 
 	r.Formatted = h.GetFormatter().Format(r)
 
-	h.write(r)
+	err := h.write(r)
+	if err != nil {
+		return false, err
+	}
 
-	return false == h.bubble
+	return false == h.bubble, nil
 }
 
 // SetLevel Sets minimum logging level at which this handler will be triggered.
@@ -59,15 +61,17 @@ func (h *FileHandler) SetLevel(level record.Level) {
 	h.level = level
 }
 
-func (h *FileHandler) write(r record.Record) {
-	h.Lock()
-	defer h.Unlock()
-	file, _ := os.OpenFile(h.GetFilename(), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	defer file.Close()
-	_, err := file.Write([]byte(r.Formatted))
+func (h *FileHandler) write(r record.Record) error {
+	file, err := os.OpenFile(h.GetFilename(), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("open file %s error: %w", h.filename, err)
 	}
+	defer file.Close()
+	_, err = file.Write([]byte(r.Formatted))
+	if err != nil {
+		return fmt.Errorf("write file %s error: %w", h.filename, err)
+	}
+	return nil
 }
 
 // GetFilename Gets the filename.

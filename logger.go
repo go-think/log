@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/go-think/log/handler"
@@ -12,7 +13,7 @@ import (
 
 type Handler interface {
 	IsHandling(r record.Record) bool
-	Handle(r record.Record) bool
+	Handle(r record.Record) (bool, error)
 }
 
 type Logger struct {
@@ -82,7 +83,8 @@ func (logger *Logger) AddRecord(level record.Level, format string, v ...interfac
 
 	levelName, err := GetLevelName(level)
 	if err != nil {
-		panic(err)
+		logger.handlerError(fmt.Errorf("cannot get level name %d: %v", level, err))
+		return
 	}
 
 	handlerKey := false
@@ -94,7 +96,7 @@ func (logger *Logger) AddRecord(level record.Level, format string, v ...interfac
 		}
 	}
 	if !handlerKey {
-		panic("level handler not exist")
+		return
 	}
 
 	if len(v) > 0 {
@@ -111,7 +113,11 @@ func (logger *Logger) AddRecord(level record.Level, format string, v ...interfac
 
 	for e := logger.handlers.Front(); e != nil; e = e.Next() {
 		h := e.Value.(Handler)
-		if h.Handle(r) {
+		stop, err := h.Handle(r)
+		if err != nil {
+			logger.handlerError(err)
+		}
+		if stop {
 			break
 		}
 	}
@@ -155,6 +161,13 @@ func (logger *Logger) Alert(format string, v ...interface{}) {
 // Emerg Adds a log record at the EMERGENCY level.
 func (logger *Logger) Emerg(format string, v ...interface{}) {
 	logger.AddRecord(record.EMERGENCY, format, v...)
+}
+
+func (logger *Logger) handlerError(err error) {
+	if err == nil {
+		return
+	}
+	_, _ = fmt.Fprintf(os.Stderr, "%s think log: %v\n", time.Now().Format(time.RFC3339), err)
 }
 
 // GetLevelName Gets the name of the logging level.

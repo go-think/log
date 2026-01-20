@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"fmt"
 	"os"
-	"sync"
 
 	"github.com/go-think/log/record"
 )
@@ -30,7 +30,6 @@ var colors = map[record.Level]brush{
 
 type ConsoleHandler struct {
 	Handler
-	sync.Mutex
 	level record.Level
 
 	bubble bool
@@ -49,24 +48,26 @@ func (h *ConsoleHandler) IsHandling(r record.Record) bool {
 }
 
 // Handle Handles a record.
-func (h *ConsoleHandler) Handle(r record.Record) bool {
+func (h *ConsoleHandler) Handle(r record.Record) (bool, error) {
 	if !h.IsHandling(r) {
-		return false
+		return false, nil
 	}
 
 	r.Formatted = h.GetFormatter().Format(r)
 
-	h.write(r)
+	err := h.write(r)
+	if err != nil {
+		return false, err
+	}
 
-	return false == h.bubble
+	return false == h.bubble, nil
 }
 
-func (h *ConsoleHandler) write(r record.Record) {
-	h.Lock()
-	defer h.Unlock()
+func (h *ConsoleHandler) write(r record.Record) error {
 	message := colors[r.Level](r.Formatted)
 	_, err := os.Stdout.Write(append([]byte(message)))
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("write console error: %w", err)
 	}
+	return nil
 }

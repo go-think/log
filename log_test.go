@@ -1,8 +1,7 @@
 package log
 
 import (
-	"errors"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -32,7 +31,7 @@ func TestLogWithFileHandler(t *testing.T) {
 	l := NewLogger("testing", record.INFO)
 	l.PushHandler(h)
 
-	filename = h.GetTimedFilename()
+	filename = h.GetFilename()
 
 	os.Remove(filename)
 
@@ -40,9 +39,9 @@ func TestLogWithFileHandler(t *testing.T) {
 
 	l.Debug(message)
 
-	_, err := ioutil.ReadFile(filename)
+	_, err := os.ReadFile(filename)
 	if err == nil {
-		t.Error(errors.New("test FileHandler error"))
+		t.Error("expected error")
 	}
 
 	h.SetLevel(record.DEBUG)
@@ -50,9 +49,9 @@ func TestLogWithFileHandler(t *testing.T) {
 	l.PushHandler(h)
 	l.Debug(message)
 
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
-		t.Error(errors.New("test FileHandler error"))
+		t.Error(fmt.Errorf("read file %s error: %w", filename, err))
 	}
 	content := string(b)
 
